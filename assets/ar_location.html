@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AR.js Location-based Box - Click to Play/Pause Audio & Multi Box</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;">
+      <a-camera gps-new-camera></a-camera>
+
+      <!-- 2 hộp chính -->
+      <a-box
+        id="box1"
+        color="#FFD700"
+        depth="0.7"
+        height="0.7"
+        width="0.7"
+        class="clickable"
+        gps-new-entity-place="latitude: 10.794435; longitude: 106.7412582;">
+      </a-box>
+      <a-box
+        id="box2"
+        color="#1E90FF"
+        depth="0.7"
+        height="0.7"
+        width="0.7"
+        class="clickable"
+        gps-new-entity-place="latitude: 10.7944525; longitude: 106.7412831;">
+      </a-box>
+      <!-- 10 hộp nhỏ sẽ được thêm bằng JS -->
+    </a-scene>
+    <audio id="audioPlayer"
+      src="https://guidepass.cloud/images/19e04a2a-f63c-4ad8-b945-43a6039f9d20_EN-000.mp3"></audio>
+    <script>
+      const audio = document.getElementById('audioPlayer');
+
+      // Click vào hộp chính sẽ bật/tắt audio
+      function toggleAudio() {
+        if (audio.paused) {
+          audio.currentTime = 0;
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      }
+      document.getElementById('box1').addEventListener('click', toggleAudio);
+      document.getElementById('box2').addEventListener('click', toggleAudio);
+
+      // ===== Thêm 10 hộp nhỏ quanh 2 tọa độ gốc =====
+      // Chọn hộp gốc 1 làm tâm
+      const lat0 = 10.794435;
+      const lng0 = 106.7412582;
+      // Bán kính vòng tròn nhỏ (khoảng 1.5 mét, 1e-5 ~ 1.1m)
+      const RADIUS = 0.0000135; // khoảng 1.5m
+      const scene = document.querySelector('a-scene');
+
+      function randomColor() {
+        const colors = [
+          "#FF6347", "#FFA500", "#FFD700", "#32CD32", "#1E90FF",
+          "#8A2BE2", "#FFC0CB", "#00CED1", "#B22222", "#00FF7F"
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      for (let i = 0; i < 10; i++) {
+        const angle = (2 * Math.PI * i) / 10;
+        const latOffset = Math.cos(angle) * RADIUS;
+        const lngOffset = Math.sin(angle) * RADIUS;
+        const box = document.createElement('a-box');
+        box.setAttribute('color', randomColor());
+        box.setAttribute('depth', '0.5');
+        box.setAttribute('height', '0.5');
+        box.setAttribute('width', '0.5');
+        box.setAttribute('gps-new-entity-place',
+          `latitude: ${lat0 + latOffset}; longitude: ${lng0 + lngOffset};`
+        );
+        scene.appendChild(box);
+      }
+
+      // Lắng nghe vị trí realtime từ Flutter nếu cần
+      window.addEventListener('message', function(event) {
+        if(event.data && event.data.lat && event.data.lng) {
+          // Bạn có thể dùng lat/lng để làm các hiệu ứng động nếu muốn!
+        }
+      });
+    </script>
+  </body>
+</html>
